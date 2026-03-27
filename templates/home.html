@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="container mt-4">
+    
+    <form method="GET" action="." class="row g-3 mb-4 bg-dark p-3 rounded shadow border border-secondary">
+        
+        <div class="col-md-5">
+            <div class="input-group">
+                <span class="input-group-text bg-warning border-0"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" class="form-control" placeholder="Nhập tên đồng hồ (VD: Rolex)..." value="{{ request.GET.q }}">
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <select name="brand" class="form-select">
+                <option value="">-- Tất cả thương hiệu --</option>
+                <option value="Rolex" {% if request.GET.brand == 'Rolex' %}selected{% endif %}>Rolex</option>
+                <option value="Cartier" {% if request.GET.brand == 'Cartier' %}selected{% endif %}>Cartier</option>
+                <option value="Omega" {% if request.GET.brand == 'Omega' %}selected{% endif %}>Omega</option>
+                <option value="Patek Philippe" {% if request.GET.brand == 'Patek Philippe' %}selected{% endif %}>Patek Philippe</option>
+                <option value="Longines" {% if request.GET.brand == 'Longines' %}selected{% endif %}>Longines</option>
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <select name="sort" class="form-select">
+                <option value="">-- Sắp xếp theo giá --</option>
+                <option value="price_asc" {% if request.GET.sort == 'price_asc' %}selected{% endif %}>Giá: Thấp đến Cao</option>
+                <option value="price_desc" {% if request.GET.sort == 'price_desc' %}selected{% endif %}>Giá: Cao xuống Thấp</option>
+            </select>
+        </div>
+
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-danger w-100 fw-bold">Lọc</button>
+        </div>
+    </form>
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for watch in watches %}
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="text-center p-3">
+                    <img src="{{ watch.image_url }}" class="card-img-top" style="height:250px; object-fit:contain;">
+                </div>
+                <div class="card-body text-center">
+                    <h5 class="fw-bold">{{ watch.name }}</h5>
+                    
+                    <p class="text-danger fw-bold fs-5">
+                        {{ watch.price|intcomma }} đ
+                    </p>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'watch_detail' watch.pk %}" class="btn btn-primary">Xem chi tiết</a>
+                        <form action="{% url 'add_to_cart' watch.pk %}" method="post">
+                            {% csrf_token %}
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-outline-danger w-50">Thêm giỏ</button>
+                                <button type="submit" name="buy_now" value="true" class="btn btn-danger w-50 fw-bold">MUA NGAY</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

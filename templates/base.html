@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WATCHSHOP - Thế giới đồng hồ</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        /* 1. CÀI ĐẶT HÌNH NỀN TỔNG THỂ */
+        body {
+            background-image: url('https://png.pngtree.com/background/20210711/original/pngtree-classic-quartz-watch-big-black-banner-picture-image_1125227.jpg');
+            background-attachment: fixed;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            position: relative;
+            color: #ffffff; 
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); 
+            z-index: -1;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            color: #ffffff !important;
+            text-shadow: none !important;
+        }
+
+        /* 3. HIỆU ỨNG KÍNH MỜ (GLASSMORPHISM) CHO CARD & BẢNG */
+        .card, .list-group-item {
+            background: rgba(30, 30, 30, 0.75) !important; 
+            backdrop-filter: blur(10px) saturate(180%);
+            -webkit-backdrop-filter: blur(10px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            border-radius: 15px;
+            color: #ffffff !important; 
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        /* 4. FIX LỖI MÀU CHỮ TRONG CARD & GIỎ HÀNG */
+        .text-muted {
+            color: #cccccc !important; 
+        }
+
+        .card p, .card span, .card div, .card label {
+            color: #ffffff;
+        }
+
+        .card .text-danger, .text-danger {
+            color: #ff4d4d !important; 
+            font-weight: bold;
+            text-shadow: none !important; 
+        }
+
+        .card .text-success, .text-success {
+            color: #28a745 !important;
+            font-weight: bold;
+        }
+
+        /* Bảng (Table) hiển thị Giỏ hàng */
+        .table {
+            color: #ffffff !important;
+        }
+        .table th, .table td {
+            background-color: transparent !important; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important; 
+            color: #ffffff !important;
+        }
+
+        /* XÓA NỀN TRẮNG Ở TIÊU ĐỀ GIỎ HÀNG VÀ CỘT */
+        .card-header {
+            background-color: transparent !important; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important; 
+        }
+        
+        .table thead th, .table-light th, .bg-light, .bg-white {
+            background-color: transparent !important; 
+            color: #ffffff !important;
+        }
+
+        /* Xử lý các ô nhập liệu (Input Form) ngoài trang web */
+        .form-control, .form-select {
+            background-color: rgba(255, 255, 255, 0.95) !important; 
+            color: #000000 !important; 
+            border: none;
+        }
+        .form-control::placeholder {
+            color: #6c757d !important;
+        }
+        .form-label {
+            color: #ffffff !important;
+            font-weight: 600;
+        }
+
+        /* 5. FIX LỖI CHỮ TRẮNG NỀN TRẮNG TRONG POPUP (MODAL) THANH TOÁN */
+        .modal-content h1, 
+        .modal-content h2, 
+        .modal-content h3, 
+        .modal-content h4, 
+        .modal-content h5, 
+        .modal-content h6,
+        .modal-title,
+        .modal-content label,
+        .modal-content .form-label {
+            color: #212529 !important; /* Trả lại màu chữ đen đậm cho Tiêu đề và Nhãn bên trong Popup */
+        }
+        .modal-content p, 
+        .modal-content span {
+            color: #333333; /* Các chữ phụ bên trong Popup có màu xám đậm */
+        }
+
+        /* 6. TINH CHỈNH NAVBAR & FOOTER */
+        .navbar {
+            background: rgba(15, 15, 15, 0.95) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid #ff4500;
+        }
+
+        .main-content {
+            padding-top: 40px;
+            padding-bottom: 60px;
+        }
+
+        footer {
+            background: rgba(0, 0, 0, 0.85) !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card img {
+            border-radius: 15px 15px 0 0;
+            padding: 10px;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body class="d-flex flex-column">
+
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3" href="{% url 'home' %}">
+                <i class="bi bi-watch me-2 text-warning"></i>WATCH<span class="text-danger">SHOP</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link position-relative" href="{% url 'view_cart' %}">
+                           <i class="bi bi-cart3 fs-4"></i>
+
+                           {% if cart_count and cart_count > 0 %}
+                              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65em;">
+                                  {{ cart_count }}
+                              </span>
+                           {% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item ms-3">
+                        {% if user.is_authenticated %}
+                            <div class="dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                                    <i class="bi bi-person-circle me-1"></i> {{ user.username }}
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-dark">
+                                    <li><a class="dropdown-item" href="{% url 'order_history' %}">Lịch sử đơn hàng</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form action="{% url 'logout' %}" method="post" class="px-3">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger btn-sm w-100">Đăng xuất</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        {% else %}
+                            <a class="btn btn-outline-light btn-sm px-4 rounded-pill me-2" href="{% url 'login' %}">Đăng nhập</a>
+
+                            <a class="btn btn-warning btn-sm px-4 rounded-pill text-dark fw-bold" href="{% url 'register' %}">Đăng ký</a>
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container main-content flex-grow-1">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm border-0" style="background: rgba(255,255,255,0.9);">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <footer class="text-light pt-5 pb-4" style="background-color: #111; border-top: 2px solid #dc3545;">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <h5 class="text-uppercase fw-bold mb-3" style="color: #dc3545;">WATCHSHOP</h5>
+                    <p class="opacity-75" style="font-size: 0.95rem; line-height: 1.6;">
+                        Điểm đến tin cậy của những tín đồ đam mê cỗ máy thời gian. Chúng tôi chuyên cung cấp các dòng đồng hồ xa xỉ chính hãng: Rolex, Patek Philippe, Cartier, Omega... với cam kết chất lượng tuyệt đối.
+                    </p>
+                </div>
+
+                <div class="col-md-4 mb-4 ps-md-5">
+                    <h5 class="text-uppercase fw-bold text-white mb-3">Hỗ trợ khách hàng</h5>
+                    <ul class="list-unstyled opacity-75" style="font-size: 0.95rem; line-height: 2;">
+                        <li><a href="#" class="text-light text-decoration-none">Chính sách bảo hành 5 năm</a></li>
+                        <li><a href="#" class="text-light text-decoration-none">Chính sách vận chuyển VIP</a></li>
+                        <li><a href="#" class="text-light text-decoration-none">Cam kết chính hãng 100%</a></li>
+                        <li><a href="#" class="text-light text-decoration-none">Bảo mật thông tin khách hàng</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-md-4 mb-4">
+                    <h5 class="text-uppercase fw-bold text-white mb-3">Thông tin liên hệ</h5>
+                    <ul class="list-unstyled opacity-75" style="font-size: 0.95rem; line-height: 2;">
+                        <li><strong>Địa chỉ:</strong> Tổ 2, phường Phan Đình Phùng, Tỉnh Thái Nguyên</li>
+                        <li><strong>Hotline:</strong> <span style="color: #dc3545;">0963.725.201</span></li>
+                        <li><strong>Email:</strong> cskh@watchshop.vn</li>
+                        <li><strong>Giờ mở cửa:</strong> 08:00 - 22:00 (Cả tuần)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <hr class="mb-4" style="border-color: #444;">
+
+            <div class="row align-items-center">
+                <div class="col-12 text-center opacity-75">
+                    <p class="mb-0" style="font-size: 0.9rem;">&copy; 2026 WATCHSHOP - Nâng tầm giá trị thời gian.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="https://app.tudongchat.com/js/chatbox.js"></script>
+    <script>
+      const tudong_chatbox = new TuDongChat('tBxdQ1nuHvzPcANKYudSn')
+      tudong_chatbox.initial()
+    </script>
+</body>
+</html>

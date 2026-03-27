@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <h3 class="fw-bold mb-4"><i class="bi bi-wallet2 me-2"></i>THANH TOÁN ĐƠN HÀNG</h3>
+    
+    <div class="row">
+        <div class="col-md-7">
+            <div class="card shadow-sm border-0 p-4 mb-4">
+                <h5 class="fw-bold border-bottom pb-3 mb-4">Thông tin giao hàng</h5>
+                
+                <form method="POST" id="checkoutForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Họ và tên người nhận</label>
+                        <input type="text" class="form-control" name="fullname" required placeholder="Nhập họ tên...">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Số điện thoại</label>
+                        <input type="tel" class="form-control" name="phone" required placeholder="Nhập số điện thoại...">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Địa chỉ giao hàng</label>
+                        <textarea class="form-control" name="address" rows="3" required placeholder="Nhập địa chỉ chi tiết..."></textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Phương thức thanh toán</label>
+                        <select class="form-select" name="payment_method" id="paymentMethod">
+                            <option value="Tiền mặt">Thanh toán khi nhận hàng (Tiền mặt)</option>
+                            <option value="Thẻ">Thanh toán bằng Thẻ</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-danger btn-lg w-100 fw-bold">XÁC NHẬN ĐẶT HÀNG</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <div class="card shadow-sm border-0 p-4 bg-light">
+                <h5 class="fw-bold border-bottom pb-3 mb-3">Tóm tắt đơn hàng</h5>
+                
+                {% for item in cart_items %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex align-items-center">
+                        {% if item.watch.image_url %}
+                            <img src="{{ item.watch.image_url }}" class="rounded border bg-white me-2" style="width: 50px; height: 50px; object-fit: contain;">
+                        {% endif %}
+                        <div>
+                            <p class="mb-0 fw-bold" style="font-size: 0.9rem;">{{ item.watch.name }}</p>
+                            <small class="text-muted">
+                                {% if item.strap_type %}{{ item.strap_type }}{% endif %}
+                                {% if item.color %}, {{ item.color }}{% endif %} 
+                                x {{ item.quantity }}
+                            </small>
+                        </div>
+                    </div>
+                    <span class="fw-bold" style="font-size: 0.9rem;">{{ item.item_total|intcomma }} đ</span>
+                </div>
+                {% empty %}
+                <p class="text-center">Giỏ hàng trống</p>
+                {% endfor %}
+                
+                <div class="border-top pt-3 mt-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Tạm tính:</span>
+                        <span class="fw-bold">{{ total_price|intcomma }} đ</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Phí vận chuyển:</span>
+                        <span class="text-success fw-bold">Miễn phí</span>
+                    </div>
+                    <div class="d-flex justify-content-between mt-3 pt-3 border-top">
+                        <span class="fw-bold fs-5">TỔNG CỘNG:</span>
+                        <span class="text-danger fw-bold fs-4">{{ total_price|intcomma }} đ</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="cardModal" tabindex="-1" aria-labelledby="cardModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold" id="cardModalLabel"><i class="bi bi-credit-card me-2"></i>Nhập thông tin thẻ</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="cardForm">
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Số thẻ</label>
+                <input type="text" class="form-control" required placeholder="XXXX XXXX XXXX XXXX" pattern="\d*">
+            </div>
+            <div class="row mb-3">
+                <div class="col-6">
+                    <label class="form-label fw-semibold">Ngày hết hạn</label>
+                    <input type="text" class="form-control" required placeholder="MM/YY">
+                </div>
+                <div class="col-6">
+                    <label class="form-label fw-semibold">Mã CVV</label>
+                    <input type="password" class="form-control" required placeholder="•••" maxlength="4">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success w-100 fw-bold">THANH TOÁN</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkoutForm = document.getElementById('checkoutForm');
+        const paymentMethod = document.getElementById('paymentMethod');
+        const cardForm = document.getElementById('cardForm');
+        
+        // Khởi tạo Modal của Bootstrap 5
+        const cardModalElement = document.getElementById('cardModal');
+        let cardModal;
+        if (typeof bootstrap !== 'undefined') {
+             cardModal = new bootstrap.Modal(cardModalElement);
+        }
+
+        // Bắt sự kiện khi bấm nút XÁC NHẬN ĐẶT HÀNG ở form chính
+        checkoutForm.addEventListener('submit', function(e) {
+            if (paymentMethod.value === 'Thẻ') {
+                e.preventDefault(); // Dừng việc gửi form ngay lập tức
+                
+                // Kiểm tra xem có load thư viện bootstrap JS chưa
+                if (cardModal) {
+                    cardModal.show(); // Hiện Popup lên
+                } else {
+                    alert("Lỗi: Chưa load thư viện Bootstrap JS để hiển thị Popup.");
+                }
+            }
+            // Nếu là 'Tiền mặt', code tự động bỏ qua khối IF này và submit form bình thường
+        });
+
+        // Bắt sự kiện khi bấm nút THANH TOÁN ở form phụ (trong Modal)
+        cardForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Không cho form thẻ reload lại trang
+            
+            // Vì đã có thuộc tính 'required', nếu code chạy vào đây nghĩa là khách đã "gõ bừa" đủ thông tin.
+            cardModal.hide(); // Đóng popup
+            
+            // Ép form chính gửi dữ liệu lên server (về views.py)
+            HTMLFormElement.prototype.submit.call(checkoutForm);
+        });
+    });
+</script>
+{% endblock %}
