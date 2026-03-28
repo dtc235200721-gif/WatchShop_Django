@@ -1,25 +1,30 @@
 from django.db import models
 from django.contrib.auth.models import User
-# Bảng sản phẩm Đồng hồ
+
+# 1. Bảng sản phẩm Đồng hồ
 class Watch(models.Model):
     name = models.CharField(max_length=200)
+    # THÊM TRƯỜNG NÀY ĐỂ HẾT LỖI NÚT LỌC
+    brand = models.CharField(max_length=100, default='Khác', verbose_name="Hãng sản xuất") 
     price = models.IntegerField()
     image_url = models.TextField()
     description = models.TextField(blank=True, null=True)
     stock = models.IntegerField(default=10)
 
     def __str__(self):
-        return self.name
+        return f"[{self.brand}] {self.name}"
 
-# Bảng Đơn hàng
+# 2. Bảng Đơn hàng
 class Order(models.Model):
-    # 1. Định nghĩa các trạng thái cố định cho đơn hàng
+    # Cập nhật danh sách trạng thái để khớp với logic trong views.py
     STATUS_CHOICES = (
-        ('pending', 'Đang xử lý'),
-        ('approved', 'Đã xác nhận'),
-        ('delivering', 'Đang giao hàng'),
-        ('completed', 'Hoàn thành'),
-        ('cancelled', 'Đã hủy'),
+        ('Đang xử lý', 'Đang xử lý'),
+        ('Chờ xác nhận CK', 'Chờ xác nhận CK'),
+        ('Đã thanh toán (Thẻ)', 'Đã thanh toán (Thẻ)'),
+        ('Đã xác nhận', 'Đã xác nhận'),
+        ('Đang giao hàng', 'Đang giao hàng'),
+        ('Hoàn thành', 'Hoàn thành'),
+        ('Đã hủy', 'Đã hủy'),
     )
 
     fullname = models.CharField(max_length=100)
@@ -29,14 +34,13 @@ class Order(models.Model):
     total_price = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    # 2. Cập nhật lại trường status: giới hạn độ dài, thêm choices, set default là mã 'pending'
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    # Tăng độ dài lên 50 để lưu được tiếng Việt có dấu
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Đang xử lý')
 
     def __str__(self):
-        # Dùng hàm get_status_display() của Django để nó in ra chữ "Đang xử lý" thay vì chữ "pending"
-        return f"Đơn hàng #{self.id} - {self.fullname} - {self.get_status_display()}"
+        return f"Đơn hàng #{self.id} - {self.fullname} - {self.status}"
     
-# Bảng Chi tiết từng món trong đơn hàng
+# 3. Bảng Chi tiết từng món trong đơn hàng
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     watch = models.ForeignKey(Watch, on_delete=models.SET_NULL, null=True)
@@ -48,6 +52,7 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.quantity} x {self.watch.name if self.watch else 'Sản phẩm đã xóa'}"
     
+# 4. Bảng Mã giảm giá
 class Coupon(models.Model):
     code = models.CharField(max_length=50, unique=True, verbose_name="Mã giảm giá")
     discount_percent = models.IntegerField(verbose_name="Phần trăm giảm (%)")
