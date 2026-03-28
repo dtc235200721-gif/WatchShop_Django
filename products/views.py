@@ -4,6 +4,8 @@ from django.contrib.auth.forms import UserCreationForm
 from .models import Watch, Order, OrderItem
 from django.contrib.auth.decorators import login_required # Đưa import này lên đầu cho chuẩn form
 from .forms import UserUpdateForm
+from .models import Coupon , Order
+from django.http import JsonResponse
 
 # 1. Trang chủ
 def home(request):
@@ -145,46 +147,65 @@ def register(request):
     return render(request, 'register.html', {'form': form})
 
 # 8. Trang Thanh toán (XỬ LÝ LƯU ĐƠN HÀNG VÀO DATABASE)
+@login_required(login_url='login') # Bắt buộc đăng nhập để biết ai đang mua mà còn kiểm tra lần 2
 def checkout(request):
     cart = request.session.get('cart', {})
-    
     if not cart:
         messages.warning(request, "Giỏ hàng của bạn đang trống!")
         return redirect('home')
 
-    # NẾU KHÁCH HÀNG BẤM NÚT "XÁC NHẬN ĐẶT HÀNG" (PHƯƠNG THỨC POST)
+    # NẾU KHÁCH HÀNG BẤM NÚT "XÁC NHẬN ĐẶT HÀNG" (POST)
     if request.method == 'POST':
         fullname = request.POST.get('fullname')
         phone = request.POST.get('phone')
         address = request.POST.get('address')
         payment_method = request.POST.get('payment_method')
+        coupon_code = request.POST.get('coupon_code') # Lấy mã giảm giá khách nhập
 
         total_price = 0
         valid_items = []
         
-        # Tính toán lại tổng tiền từ CSDL cho an toàn
+        # 1. Tính tổng tiền gốc
         for cart_key, item_data in cart.items():
             try:
                 watch = Watch.objects.get(pk=item_data['watch_id'])
-                item_total = watch.price * item_data['quantity']
-                total_price += item_total
+                total_price += watch.price * item_data['quantity']
                 valid_items.append((watch, item_data))
             except Watch.DoesNotExist:
                 continue
 
-        # BƯỚC 1: Lưu thông tin chung của Đơn hàng (ĐÃ SỬA PHẦN NÀY)
-        current_user = request.user if request.user.is_authenticated else None
+        # 2. Xử lý Mã giảm giá (Nếu có nhập)
+        discount_percent = 0
+        if coupon_code:
+            try:
+                coupon = Coupon.objects.get(code=coupon_code, active=True)
+                
+                # Kiểm tra khách này đã từng có đơn hàng nào chưa?
+                has_bought_before = Order.objects.filter(user=request.user).exists()
+                if has_bought_before:
+                    discount_percent = coupon.discount_percent
+                    messages.success(request, f"Áp dụng mã {coupon_code} thành công! Giảm {discount_percent}%.")
+                else:
+                    messages.error(request, "Mã giảm giá này chỉ dành cho khách mua hàng từ lần thứ 2!")
+                    return redirect('checkout')
+                    
+            except Coupon.DoesNotExist:
+                messages.error(request, "Mã giảm giá không tồn tại hoặc đã hết hạn!")
+                return redirect('checkout')
 
+        # 3. Tính tiền chính thức sau khi giảm
+        final_price = total_price * (100 - discount_percent) / 100
+
+        # 4. Lưu Đơn hàng
         order = Order.objects.create(
-            user=current_user, # Ghi nhận user mua hàng
+            user=request.user, 
             fullname=fullname,
             phone=phone,
             address=address,
             payment_method=payment_method,
-            total_price=total_price
+            total_price=final_price # Lưu số tiền đã giảm
         )
 
-        # BƯỚC 2: Lưu từng sản phẩm vào Đơn hàng chi tiết
         for watch, item_data in valid_items:
             OrderItem.objects.create(
                 order=order,
@@ -195,14 +216,11 @@ def checkout(request):
                 color=item_data.get('color', '')
             )
 
-        # BƯỚC 3: Dọn sạch giỏ hàng sau khi đặt thành công
         del request.session['cart']
         request.session.modified = True
-
-        # BƯỚC 4: Chuyển hướng sang trang Báo Thành Công
         return redirect('order_success')
 
-    # NẾU LÀ VÀO TRANG ĐỂ XEM (PHƯƠNG THỨC GET)
+    # NẾU LÀ VÀO TRANG ĐỂ XEM (GET)
     cart_items = []
     total_price = 0
     for cart_key, item_data in cart.items():
@@ -251,3 +269,25 @@ def profile(request):
         form = UserUpdateForm(instance=request.user)
 
     return render(request, 'profile.html', {'form': form})
+
+@login_required(login_url='login')
+def check_coupon(request):
+    code = request.GET.get('code', '')
+    if not code:
+        return JsonResponse({'valid': False, 'message': 'Vui lòng nhập mã.'})
+    
+    try:
+        coupon = Coupon.objects.get(code=code, active=True)
+        # Kiểm tra xem khách đã có đơn nào chưa (khách cũ)
+        has_bought_before = Order.objects.filter(user=request.user).exists()
+        
+        if has_bought_before:
+            return JsonResponse({
+                'valid': True,
+                'discount_percent': coupon.discount_percent,
+                'message': f'Áp dụng thành công! Giảm {coupon.discount_percent}%'
+            })
+        else:
+            return JsonResponse({'valid': False, 'message': 'Mã này chỉ dành cho khách mua hàng từ lần thứ 2!'})
+    except Coupon.DoesNotExist:
+        return JsonResponse({'valid': False, 'message': 'Mã không hợp lệ hoặc đã hết hạn!'})

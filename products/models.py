@@ -47,3 +47,11 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity} x {self.watch.name if self.watch else 'Sản phẩm đã xóa'}"
+    
+class Coupon(models.Model):
+    code = models.CharField(max_length=50, unique=True, verbose_name="Mã giảm giá")
+    discount_percent = models.IntegerField(verbose_name="Phần trăm giảm (%)")
+    active = models.BooleanField(default=True, verbose_name="Còn hiệu lực")
+
+    def __str__(self):
+        return f"{self.code} - Giảm {self.discount_percent}%"

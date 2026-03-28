@@ -14,3 +14,7 @@ class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderItemInline]
 
 admin.site.register(Watch)
+
+from .models import Coupon # Nhớ import model Coupon
+
+admin.site.register(Coupon)

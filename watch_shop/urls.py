@@ -32,4 +32,6 @@ urlpatterns = [
 
     path('profile/', views.profile, name='profile'),
 
+    path('kiem-tra-ma/', views.check_coupon, name='check_coupon'),
+
 ]

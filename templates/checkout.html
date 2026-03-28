@@ -28,12 +28,23 @@
                         <textarea class="form-control" name="address" rows="3" required placeholder="Nhập địa chỉ chi tiết..."></textarea>
                     </div>
                     
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label class="form-label fw-semibold">Phương thức thanh toán</label>
                         <select class="form-select" name="payment_method" id="paymentMethod">
                             <option value="Tiền mặt">Thanh toán khi nhận hàng (Tiền mặt)</option>
                             <option value="Thẻ">Thanh toán bằng Thẻ</option>
                         </select>
+                    </div>
+
+                    <div class="mb-4 p-3 rounded" style="background-color: rgba(255, 193, 7, 0.1); border: 1px dashed #ffc107;">
+                        <label class="form-label fw-semibold text-warning"><i class="bi bi-ticket-perforated me-2"></i>Mã giảm giá (Nếu có)</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control border-warning" name="coupon_code" id="couponCodeInput" placeholder="Nhập mã giảm giá tại đây...">
+                            <button class="btn btn-warning fw-bold text-dark" type="button" id="btnApplyCoupon">ÁP DỤNG</button>
+                        </div>
+                        <div id="couponMessage" class="mt-2 text-light opacity-75 fst-italic" style="font-size: 0.85rem;">
+                            * Ưu đãi đặc biệt chỉ dành cho khách hàng đã mua hàng từ lần thứ 2.
+                        </div>
                     </div>
                     
                     <button type="submit" class="btn btn-danger btn-lg w-100 fw-bold">XÁC NHẬN ĐẶT HÀNG</button>
@@ -76,8 +87,8 @@
                         <span class="text-success fw-bold">Miễn phí</span>
                     </div>
                     <div class="d-flex justify-content-between mt-3 pt-3 border-top">
-                        <span class="fw-bold fs-5">TỔNG CỘNG:</span>
-                        <span class="text-danger fw-bold fs-4">{{ total_price|intcomma }} đ</span>
+                        <span class="fw-bold fs-5 text-dark">TỔNG CỘNG:</span>
+                        <span class="text-danger fw-bold fs-4" id="finalPriceDisplay">{{ total_price|intcomma }} đ</span>
                     </div>
                 </div>
             </div>
@@ -96,7 +107,7 @@
         <form id="cardForm">
             <div class="mb-3">
                 <label class="form-label fw-semibold">Số thẻ</label>
-                <input type="text" class="form-control" required placeholder="XXXX XXXX XXXX XXXX" pattern="\d*">
+                <input type="text" class="form-control" required placeholder="XXXX XXXX XXXX XXXX">
             </div>
             <div class="row mb-3">
                 <div class="col-6">
@@ -121,38 +132,81 @@
         const paymentMethod = document.getElementById('paymentMethod');
         const cardForm = document.getElementById('cardForm');
         
-        // Khởi tạo Modal của Bootstrap 5
+        // Modal Bootstrap
         const cardModalElement = document.getElementById('cardModal');
         let cardModal;
-        if (typeof bootstrap !== 'undefined') {
+        if (typeof bootstrap !== 'undefined' && cardModalElement) {
              cardModal = new bootstrap.Modal(cardModalElement);
         }
 
-        // Bắt sự kiện khi bấm nút XÁC NHẬN ĐẶT HÀNG ở form chính
+        // Xử lý nút đặt hàng
         checkoutForm.addEventListener('submit', function(e) {
             if (paymentMethod.value === 'Thẻ') {
-                e.preventDefault(); // Dừng việc gửi form ngay lập tức
-                
-                // Kiểm tra xem có load thư viện bootstrap JS chưa
+                e.preventDefault();
                 if (cardModal) {
-                    cardModal.show(); // Hiện Popup lên
+                    cardModal.show();
                 } else {
-                    alert("Lỗi: Chưa load thư viện Bootstrap JS để hiển thị Popup.");
+                    alert("Lỗi: Chưa load thư viện Bootstrap JS.");
                 }
             }
-            // Nếu là 'Tiền mặt', code tự động bỏ qua khối IF này và submit form bình thường
         });
 
-        // Bắt sự kiện khi bấm nút THANH TOÁN ở form phụ (trong Modal)
+        // Xử lý form thẻ
         cardForm.addEventListener('submit', function(e) {
-            e.preventDefault(); // Không cho form thẻ reload lại trang
-            
-            // Vì đã có thuộc tính 'required', nếu code chạy vào đây nghĩa là khách đã "gõ bừa" đủ thông tin.
-            cardModal.hide(); // Đóng popup
-            
-            // Ép form chính gửi dữ liệu lên server (về views.py)
+            e.preventDefault();
+            cardModal.hide();
             HTMLFormElement.prototype.submit.call(checkoutForm);
         });
+
+        // ==========================================
+        // PHẦN QUAN TRỌNG: XỬ LÝ MÃ GIẢM GIÁ
+        // ==========================================
+        const btnApplyCoupon = document.getElementById('btnApplyCoupon');
+        const couponCodeInput = document.getElementById('couponCodeInput');
+        const couponMessage = document.getElementById('couponMessage');
+        const finalPriceDisplay = document.getElementById('finalPriceDisplay');
+        
+        // Lấy giá trị số từ Django, loại bỏ dấu chấm và đ để tính toán
+        const originalTotalPrice = parseInt("{{ total_price }}".replace(/[^\d]/g, '')) || 0;
+
+        if (btnApplyCoupon) {
+            btnApplyCoupon.addEventListener('click', function() {
+                const code = couponCodeInput.value.trim();
+                if (!code) {
+                    couponMessage.innerHTML = '<span class="text-danger">Vui lòng nhập mã!</span>';
+                    return;
+                }
+
+                // Chú ý: Dùng đường dẫn /kiem-tra-ma/ đã sửa ở urls.py
+                fetch(`/kiem-tra-ma/?code=${code}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.valid) {
+                            couponMessage.innerHTML = `<span class="text-success fw-bold">${data.message}</span>`;
+                            
+                            // Tính toán giá mới
+                            const discountPercent = data.discount_percent || 0;
+                            const discountAmount = originalTotalPrice * (discountPercent / 100);
+                            const newTotal = originalTotalPrice - discountAmount;
+                            
+                            // Hiển thị định dạng tiền Việt Nam
+                            finalPriceDisplay.innerHTML = newTotal.toLocaleString('vi-VN') + ' đ <br><span class="text-success fs-6 fw-normal d-block mt-1">(Đã giảm ' + discountPercent + '%)</span>';
+                            
+                            // Khóa nút để không bấm nhiều lần
+                            btnApplyCoupon.disabled = true;
+                            btnApplyCoupon.classList.remove('btn-warning');
+                            btnApplyCoupon.classList.add('btn-secondary');
+                        } else {
+                            couponMessage.innerHTML = `<span class="text-danger fw-bold">${data.message}</span>`;
+                            finalPriceDisplay.innerHTML = originalTotalPrice.toLocaleString('vi-VN') + ' đ';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Lỗi:', error);
+                        couponMessage.innerHTML = '<span class="text-danger">Lỗi kết nối Server!</span>';
+                    });
+            });
+        }
     });
 </script>
 {% endblock %}
