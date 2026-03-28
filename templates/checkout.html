@@ -33,18 +33,32 @@
                         <select class="form-select" name="payment_method" id="paymentMethod">
                             <option value="Tiền mặt">Thanh toán khi nhận hàng (Tiền mặt)</option>
                             <option value="Thẻ">Thanh toán bằng Thẻ</option>
+                            <option value="Chuyển khoản">Chuyển khoản Ngân hàng (VietQR)</option>
                         </select>
                     </div>
 
+                    <div id="bankInfo" class="mb-3 p-3 border rounded bg-light d-none">
+                        <h6 class="fw-bold text-primary"><i class="bi bi-bank me-2"></i>Thông tin ngân hàng</h6>
+                        <div class="row align-items-center">
+                            <div class="col-sm-7">
+                                <p class="mb-1">Ngân hàng: <strong>MB Bank</strong></p>
+                                <p class="mb-1">STK: <strong>0345678999</strong></p>
+                                <p class="mb-1">Chủ TK: <strong>NGUYEN VAN A</strong></p>
+                                <small class="text-muted fst-italic">* Nội dung: Thanh toan don hang</small>
+                            </div>
+                            <div class="col-sm-5 text-center">
+                                <img id="qrCodeImg" src="https://img.vietqr.io/image/mbbank-0345678999-compact.png?amount={{ total_price }}&addInfo=Thanh toan don hang" class="img-fluid border rounded shadow-sm" style="max-width: 150px;">
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="mb-4 p-3 rounded" style="background-color: rgba(255, 193, 7, 0.1); border: 1px dashed #ffc107;">
-                        <label class="form-label fw-semibold text-warning"><i class="bi bi-ticket-perforated me-2"></i>Mã giảm giá (Nếu có)</label>
+                        <label class="form-label fw-semibold text-warning"><i class="bi bi-ticket-perforated me-2"></i>Mã giảm giá (Dành cho khách cũ)</label>
                         <div class="input-group">
-                            <input type="text" class="form-control border-warning" name="coupon_code" id="couponCodeInput" placeholder="Nhập mã giảm giá tại đây...">
+                            <input type="text" class="form-control border-warning" name="coupon_code" id="couponCodeInput" placeholder="Nhập mã giảm giá...">
                             <button class="btn btn-warning fw-bold text-dark" type="button" id="btnApplyCoupon">ÁP DỤNG</button>
                         </div>
-                        <div id="couponMessage" class="mt-2 text-light opacity-75 fst-italic" style="font-size: 0.85rem;">
-                            * Ưu đãi đặc biệt chỉ dành cho khách hàng đã mua hàng từ lần thứ 2.
-                        </div>
+                        <div id="couponMessage" class="mt-2" style="font-size: 0.85rem;"></div>
                     </div>
                     
                     <button type="submit" class="btn btn-danger btn-lg w-100 fw-bold">XÁC NHẬN ĐẶT HÀNG</button>
@@ -64,17 +78,11 @@
                         {% endif %}
                         <div>
                             <p class="mb-0 fw-bold" style="font-size: 0.9rem;">{{ item.watch.name }}</p>
-                            <small class="text-muted">
-                                {% if item.strap_type %}{{ item.strap_type }}{% endif %}
-                                {% if item.color %}, {{ item.color }}{% endif %} 
-                                x {{ item.quantity }}
-                            </small>
+                            <small class="text-muted">x {{ item.quantity }}</small>
                         </div>
                     </div>
                     <span class="fw-bold" style="font-size: 0.9rem;">{{ item.item_total|intcomma }} đ</span>
                 </div>
-                {% empty %}
-                <p class="text-center">Giỏ hàng trống</p>
                 {% endfor %}
                 
                 <div class="border-top pt-3 mt-3">
@@ -88,7 +96,9 @@
                     </div>
                     <div class="d-flex justify-content-between mt-3 pt-3 border-top">
                         <span class="fw-bold fs-5 text-dark">TỔNG CỘNG:</span>
-                        <span class="text-danger fw-bold fs-4" id="finalPriceDisplay">{{ total_price|intcomma }} đ</span>
+                        <div>
+                            <span class="text-danger fw-bold fs-4" id="finalPriceDisplay">{{ total_price|intcomma }} đ</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -96,12 +106,12 @@
     </div>
 </div>
 
-<div class="modal fade" id="cardModal" tabindex="-1" aria-labelledby="cardModalLabel" aria-hidden="true">
+<div class="modal fade" id="cardModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title fw-bold" id="cardModalLabel"><i class="bi bi-credit-card me-2"></i>Nhập thông tin thẻ</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h5 class="modal-title fw-bold"><i class="bi bi-credit-card me-2"></i>Nhập thông tin thẻ</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
         <form id="cardForm">
@@ -119,7 +129,7 @@
                     <input type="password" class="form-control" required placeholder="•••" maxlength="4">
                 </div>
             </div>
-            <button type="submit" class="btn btn-success w-100 fw-bold">THANH TOÁN</button>
+            <button type="submit" class="btn btn-success w-100 fw-bold">THANH TOÁN NGAY</button>
         </form>
       </div>
     </div>
@@ -131,79 +141,64 @@
         const checkoutForm = document.getElementById('checkoutForm');
         const paymentMethod = document.getElementById('paymentMethod');
         const cardForm = document.getElementById('cardForm');
-        
-        // Modal Bootstrap
+        const bankInfo = document.getElementById('bankInfo');
+        const qrCodeImg = document.getElementById('qrCodeImg');
         const cardModalElement = document.getElementById('cardModal');
-        let cardModal;
-        if (typeof bootstrap !== 'undefined' && cardModalElement) {
-             cardModal = new bootstrap.Modal(cardModalElement);
-        }
+        let cardModal = (typeof bootstrap !== 'undefined' && cardModalElement) ? new bootstrap.Modal(cardModalElement) : null;
 
-        // Xử lý nút đặt hàng
-        checkoutForm.addEventListener('submit', function(e) {
-            if (paymentMethod.value === 'Thẻ') {
-                e.preventDefault();
-                if (cardModal) {
-                    cardModal.show();
-                } else {
-                    alert("Lỗi: Chưa load thư viện Bootstrap JS.");
-                }
+        // 1. Ẩn/Hiện ngân hàng
+        paymentMethod.addEventListener('change', function() {
+            if (this.value === 'Chuyển khoản') {
+                bankInfo.classList.remove('d-none');
+            } else {
+                bankInfo.classList.add('d-none');
             }
         });
 
-        // Xử lý form thẻ
+        // 2. Xử lý nút đặt hàng
+        checkoutForm.addEventListener('submit', function(e) {
+            if (paymentMethod.value === 'Thẻ') {
+                e.preventDefault();
+                if (cardModal) cardModal.show();
+            }
+        });
+
+        // 3. Xác nhận từ Modal thẻ
         cardForm.addEventListener('submit', function(e) {
             e.preventDefault();
             cardModal.hide();
             HTMLFormElement.prototype.submit.call(checkoutForm);
         });
 
-        // ==========================================
-        // PHẦN QUAN TRỌNG: XỬ LÝ MÃ GIẢM GIÁ
-        // ==========================================
+        // 4. AJAX Mã giảm giá
         const btnApplyCoupon = document.getElementById('btnApplyCoupon');
         const couponCodeInput = document.getElementById('couponCodeInput');
         const couponMessage = document.getElementById('couponMessage');
         const finalPriceDisplay = document.getElementById('finalPriceDisplay');
-        
-        // Lấy giá trị số từ Django, loại bỏ dấu chấm và đ để tính toán
         const originalTotalPrice = parseInt("{{ total_price }}".replace(/[^\d]/g, '')) || 0;
 
         if (btnApplyCoupon) {
             btnApplyCoupon.addEventListener('click', function() {
                 const code = couponCodeInput.value.trim();
-                if (!code) {
-                    couponMessage.innerHTML = '<span class="text-danger">Vui lòng nhập mã!</span>';
-                    return;
-                }
+                if (!code) return;
 
-                // Chú ý: Dùng đường dẫn /kiem-tra-ma/ đã sửa ở urls.py
                 fetch(`/kiem-tra-ma/?code=${code}`)
-                    .then(response => response.json())
+                    .then(res => res.json())
                     .then(data => {
                         if (data.valid) {
                             couponMessage.innerHTML = `<span class="text-success fw-bold">${data.message}</span>`;
+                            const newTotal = originalTotalPrice * (1 - data.discount_percent / 100);
                             
-                            // Tính toán giá mới
-                            const discountPercent = data.discount_percent || 0;
-                            const discountAmount = originalTotalPrice * (discountPercent / 100);
-                            const newTotal = originalTotalPrice - discountAmount;
+                            finalPriceDisplay.innerHTML = newTotal.toLocaleString('vi-VN') + ' đ <br><small class="text-success fw-normal">(-' + data.discount_percent + '%)</small>';
                             
-                            // Hiển thị định dạng tiền Việt Nam
-                            finalPriceDisplay.innerHTML = newTotal.toLocaleString('vi-VN') + ' đ <br><span class="text-success fs-6 fw-normal d-block mt-1">(Đã giảm ' + discountPercent + '%)</span>';
-                            
-                            // Khóa nút để không bấm nhiều lần
+                            // Cập nhật QR code theo giá mới
+                            if (qrCodeImg) {
+                                qrCodeImg.src = `https://img.vietqr.io/image/mbbank-0345678999-compact.png?amount=${newTotal}&addInfo=Thanh toan don hang`;
+                            }
                             btnApplyCoupon.disabled = true;
-                            btnApplyCoupon.classList.remove('btn-warning');
-                            btnApplyCoupon.classList.add('btn-secondary');
                         } else {
                             couponMessage.innerHTML = `<span class="text-danger fw-bold">${data.message}</span>`;
-                            finalPriceDisplay.innerHTML = originalTotalPrice.toLocaleString('vi-VN') + ' đ';
                         }
-                    })
-                    .catch(error => {
-                        console.error('Lỗi:', error);
-                        couponMessage.innerHTML = '<span class="text-danger">Lỗi kết nối Server!</span>';
                     });
             });
         }
