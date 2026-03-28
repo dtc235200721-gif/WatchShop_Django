@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow p-4 border-0">
+                <h2 class="text-center mb-4">Thông tin cá nhân</h2>
+                
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-success">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Họ</label>
+                        {{ form.last_name }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tên</label>
+                        {{ form.first_name }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Địa chỉ Email</label>
+                        {{ form.email }}
+                        <small class="text-muted">Dùng để lấy lại mật khẩu khi quên.</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 fw-bold">CẬP NHẬT HỒ SƠ</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

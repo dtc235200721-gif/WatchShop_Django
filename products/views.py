@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from .models import Watch, Order, OrderItem
 from django.contrib.auth.decorators import login_required # Đưa import này lên đầu cho chuẩn form
+from .forms import UserUpdateForm
 
 # 1. Trang chủ
 def home(request):
@@ -235,3 +236,18 @@ def order_history(request):
     orders = Order.objects.filter(user=request.user).order_by('-created_at') 
     
     return render(request, 'order_history.html', {'orders': orders})
+
+# 11. Trang cập nhật thông tin cá nhân (Profile)
+@login_required(login_url='login')
+def profile(request):
+    if request.method == 'POST':
+        form = UserUpdateForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Hồ sơ của bạn đã được cập nhật thành công!')
+            return redirect('profile') 
+    else:
+        # Load form với dữ liệu có sẵn của user
+        form = UserUpdateForm(instance=request.user)
+
+    return render(request, 'profile.html', {'form': form})
