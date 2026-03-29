@@ -2,7 +2,65 @@
 {% load humanize %}
 
 {% block content %}
-<div class="container mt-4">
+
+<style>
+    /* BẺ KHÓA CONTAINER ĐỂ TRÀN VIỀN 100% */
+    .hero-banner-wrapper {
+        width: 100vw !important;
+        position: relative;
+        left: 50%;
+        transform: translateX(-50%);
+        background-image: url('https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=2080&auto=format&fit=crop'); 
+        background-size: cover;
+        background-position: center;
+        padding: 120px 0;
+        margin-bottom: 50px;
+    }
+
+    /* Giữ chữ canh lề cho khớp với phần sản phẩm bên dưới */
+    .container-for-content {
+        width: 100%;
+        max-width: 1300px; 
+        margin: 0 auto;
+        padding: 0 15px;
+    }
+
+    /* Nút mua ngay */
+    .btn-buy-now {
+        background-color: #cda873 !important; 
+        color: white !important;
+        font-weight: bold !important;
+        padding: 12px 35px !important;
+        border-radius: 5px !important;
+        text-decoration: none !important;
+        font-size: 1.1rem !important;
+        transition: all 0.3s !important;
+        display: inline-block !important;
+        border: none !important;
+    }
+
+    .btn-buy-now:hover {
+        background-color: #b5905d !important;
+        transform: translateY(-2px);
+    }
+</style>
+<div class="hero-banner-wrapper">
+    <div class="container-for-content">
+        <div style="max-width: 600px; text-align: left;">
+            <h4 style="color: #ffffff !important; font-weight: 600 !important; font-size: 1.2rem !important; margin-bottom: 10px !important; text-shadow: 1px 1px 5px rgba(0,0,0,0.7) !important;">
+                Giao dịch trong Ưu đãi
+            </h4>
+            <h1 style="color: #2ab684 !important; font-weight: 800 !important; font-size: 3.5rem !important; line-height: 1.2 !important; margin-bottom: 15px !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.8) !important;">
+                Ưu đãi siêu giá trị<br>Trên tất cả sản phẩm
+            </h1>
+            <p style="color: #2ab684 !important; font-size: 1.1rem !important; margin-bottom: 30px !important; text-shadow: 1px 1px 4px rgba(0,0,0,0.8) !important;">
+                Tiết kiệm nhiều hơn với phiếu giảm giá & giảm giá tới 70%
+            </p>
+            <a href="#product-section" class="btn-buy-now">Mua Ngay</a>
+        </div>
+    </div>
+</div>
+<div id="product-section" class="container mt-4">
     
     <form method="GET" action="." class="row g-3 mb-4 bg-dark p-3 rounded shadow border border-secondary">
         
@@ -36,6 +94,7 @@
             <button type="submit" class="btn btn-danger w-100 fw-bold">Lọc</button>
         </div>
     </form>
+    
     <div class="row row-cols-1 row-cols-md-3 g-4">
         {% for watch in watches %}
         <div class="col">
