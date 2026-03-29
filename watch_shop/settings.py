@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # 2. Bảo mật (Giữ nguyên hoặc thay đổi tùy ý)
 SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # 3. Các ứng dụng đã cài đặt
 INSTALLED_APPS = [

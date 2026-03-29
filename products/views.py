@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from .models import Watch, Order, OrderItem, Coupon
 from .forms import UserUpdateForm
+from django.db.models import Count, Sum
 
 # 1. Trang chủ (Tìm kiếm, Lọc hãng, Sắp xếp)
 def home(request):
@@ -234,3 +235,23 @@ def profile(request):
     else:
         form = UserUpdateForm(instance=request.user)
     return render(request, 'profile.html', {'form': form})
+
+@login_required(login_url='login')
+def dashboard(request):
+    # 1. Dữ liệu biểu đồ Tròn (Trạng thái đơn hàng)
+    order_data = Order.objects.values('status').annotate(count=Count('id'))
+    status_labels = [item['status'] for item in order_data]
+    status_counts = [item['count'] for item in order_data]
+
+    # 2. Dữ liệu biểu đồ Cột (Tồn kho theo hãng)
+    brand_data = Watch.objects.values('brand').annotate(total_stock=Sum('stock'))
+    brand_labels = [item['brand'] for item in brand_data]
+    brand_stocks = [item['total_stock'] for item in brand_data]
+
+    context = {
+        'status_labels': status_labels,
+        'status_counts': status_counts,
+        'brand_labels': brand_labels,
+        'brand_stocks': brand_stocks,
+    }
+    return render(request, 'dashboard.html', context)

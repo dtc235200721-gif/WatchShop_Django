@@ -34,4 +34,6 @@ urlpatterns = [
 
     path('kiem-tra-ma/', views.check_coupon, name='check_coupon'),
 
+    path('dashboard/', views.dashboard, name='dashboard'),
+
 ]

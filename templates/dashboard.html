@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center text-white mb-4">BÁO CÁO THỐNG KÊ</h2>
+    
+    <div class="row">
+        <div class="col-md-5">
+            <div class="card bg-dark text-white shadow p-3 border-secondary">
+                <h5 class="text-center text-warning">Trạng thái đơn hàng</h5>
+                <canvas id="orderChart"></canvas>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <div class="card bg-dark text-white shadow p-3 border-secondary">
+                <h5 class="text-center text-warning">Tồn kho theo hãng</h5>
+                <canvas id="brandChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Vẽ Biểu đồ tròn
+    const ctxOrder = document.getElementById('orderChart').getContext('2d');
+    new Chart(ctxOrder, {
+        type: 'pie',
+        data: {
+            labels: {{ status_labels|safe }},
+            datasets: [{
+                data: {{ status_counts|safe }},
+                backgroundColor: ['#ff7675', '#74b9ff', '#55efc4', '#ffeaa7', '#a29bfe'],
+            }]
+        }
+    });
+
+    // Vẽ Biểu đồ cột
+    const ctxBrand = document.getElementById('brandChart').getContext('2d');
+    new Chart(ctxBrand, {
+        type: 'bar',
+        data: {
+            labels: {{ brand_labels|safe }},
+            datasets: [{
+                label: 'Số lượng đồng hồ',
+                data: {{ brand_stocks|safe }},
+                backgroundColor: '#fdcb6e',
+            }]
+        },
+        options: { scales: { y: { beginAtZero: true } } }
+    });
+</script>
+{% endblock %}
