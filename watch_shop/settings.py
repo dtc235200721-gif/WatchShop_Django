@@ -1,12 +1,16 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load các biến môi trường từ file .env
+load_dotenv()
 
 # 1. Đường dẫn gốc của dự án
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # 2. Bảo mật (Giữ nguyên hoặc thay đổi tùy ý)
-SECRET_KEY = 'django-insecure-chuyen-dong-ho-xin'
-DEBUG = True
+SECRET_KEY = os.getenv('SECRET_KEY')
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = []
 
 # 3. Các ứng dụng đã cài đặt
