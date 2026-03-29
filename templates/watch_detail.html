@@ -2,171 +2,128 @@
 {% load humanize %}
 
 {% block content %}
-<div class="container mt-5 mb-5">
-    <div class="row bg-white p-4 shadow-sm rounded">
-        <div class="col-md-5 text-center">
-            <img src="{{ watch.image_url }}" class="img-fluid rounded border p-3" style="max-height: 400px; object-fit: contain;">
-        </div>
-
-        <div class="col-md-7">
-            <h2 class="fw-bold">{{ watch.name }}</h2>
-            <div class="mb-3 text-warning">
-                <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i>
-                <span class="text-muted ms-2 fs-6">Đã bán 1.2k</span>
-            </div>
-
-            <div class="bg-light p-4 rounded mb-4 d-flex align-items-center">
-                <span class="text-danger fw-bold me-3" style="font-size: 2.5rem;">
-                    {{ watch.price|intcomma }} đ
-                </span>
-                <span class="text-muted text-decoration-line-through fs-5">2.500.000.000 đ</span>
-                <span class="badge bg-danger ms-3 px-2 py-1 fs-6">-20% GIẢM</span>
-            </div>
-            
-            <div class="mt-4">
-                <p class="text-muted"><i class="bi bi-shield-check text-success me-2"></i>Bảo hành chính hãng 24 tháng</p>
-                <p class="text-muted"><i class="bi bi-arrow-return-left text-success me-2"></i>Đổi trả miễn phí trong 7 ngày</p>
-            </div>
-
-            <div class="d-flex gap-3 mt-5">
-                <button type="button" class="btn btn-outline-danger btn-lg w-50 fw-bold" data-bs-toggle="modal" data-bs-target="#optionModal" onclick="setBuyNow('false')">
-                    <i class="bi bi-cart-plus me-2"></i> THÊM VÀO GIỎ
-                </button>
-                <button type="button" class="btn btn-danger btn-lg w-50 fw-bold" data-bs-toggle="modal" data-bs-target="#optionModal" onclick="setBuyNow('true')">
-                    MUA NGAY
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="optionModal" tabindex="-1" aria-labelledby="optionModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <form action="{% url 'add_to_cart' watch.pk %}" method="post">
-                {% csrf_token %}
-                <input type="hidden" name="buy_now" id="buy_now_input" value="false">
-                
-                <div class="modal-header border-0 pb-0">
-                    <div class="d-flex align-items-end">
-                        <img src="{{ watch.image_url }}" class="img-thumbnail rounded bg-white shadow-sm" style="width: 100px; height: 100px; object-fit: cover; margin-top: -30px; border: 2px solid #ddd;">
-                        <div class="ms-3 mb-1">
-                            <div class="text-danger fw-bold fs-4" id="modal-price">{{ watch.price|intcomma }} đ</div>
-                            <div class="text-muted small">Kho: 10</div>
-                        </div>
-                    </div>
-                    <button type="button" class="btn-close align-self-start" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-
-                <div class="modal-body pt-4">
-                    <h6 class="fw-bold mb-2">Loại Dây Đeo</h6>
-                    <div class="d-flex flex-wrap gap-2 mb-4">
-                        <input type="radio" name="strap_type" id="strap_leather" value="Dây Da" class="btn-check" checked>
-                        <label class="btn btn-outline-secondary custom-radio-btn" for="strap_leather">Dây Da Đen</label>
-
-                        <input type="radio" name="strap_type" id="strap_steel" value="Dây Thép" class="btn-check">
-                        <label class="btn btn-outline-secondary custom-radio-btn" for="strap_steel">Dây Thép Bạc</label>
-                    </div>
-
-                    <h6 class="fw-bold mb-2">Màu Mặt Đồng Hồ</h6>
-                    <div class="d-flex flex-wrap gap-2 mb-4">
-                        <input type="radio" name="color" id="color_gold" value="Vàng" class="btn-check" checked>
-                        <label class="btn btn-outline-secondary custom-radio-btn" for="color_gold">Vàng Gold</label>
-
-                        <input type="radio" name="color" id="color_silver" value="Bạc" class="btn-check">
-                        <label class="btn btn-outline-secondary custom-radio-btn" for="color_silver">Bạc Tinh Tế</label>
-                    </div>
-
-                    <div class="d-flex align-items-center justify-content-between pt-3 border-top">
-                        <h6 class="fw-bold mb-0">Số lượng</h6>
-                        <div class="input-group input-group-sm" style="width: 130px;">
-                            <button class="btn btn-outline-secondary fw-bold px-3" type="button" onclick="decreaseQty()">-</button>
-                            <input type="number" class="form-control text-center fw-bold bg-white" id="qty-input" name="quantity" value="1" min="1" readonly>
-                            <button class="btn btn-outline-secondary fw-bold px-3" type="button" onclick="increaseQty()">+</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="modal-footer border-0 p-3 bg-light rounded-bottom">
-                    <button type="submit" class="btn btn-danger w-100 py-2 fw-bold fs-5 shadow-sm">XÁC NHẬN</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<script>
-    // Xử lý giá tiền
-    const rawPrice = "{{ watch.price }}";
-    const BASE_PRICE = parseInt(rawPrice.replace(/[^\d]/g, '')) || 0;
-
-    // Gán cờ Mua Ngay hoặc Thêm Giỏ
-    function setBuyNow(status) {
-        document.getElementById('buy_now_input').value = status;
-    }
-
-    function increaseQty() {
-        let input = document.getElementById('qty-input');
-        input.value = parseInt(input.value) + 1;
-        updateModalPrice();
-    }
-
-    function decreaseQty() {
-        let input = document.getElementById('qty-input');
-        if (parseInt(input.value) > 1) {
-            input.value = parseInt(input.value) - 1;
-            updateModalPrice();
-        }
-    }
-
-    function updateModalPrice() {
-        let qty = parseInt(document.getElementById('qty-input').value) || 1;
-        let totalPrice = BASE_PRICE * qty;
-        document.getElementById('modal-price').innerText = totalPrice.toLocaleString('vi-VN') + ' đ';
-    }
-</script>
-
 <style>
-    /* CSS cho Nút */
-    .btn-danger { background-color: #ee4d2d; border: none; }
-    .btn-danger:hover { background-color: #d73211; }
-    .btn-outline-danger { color: #ee4d2d; border-color: #ee4d2d; }
-    .btn-outline-danger:hover { background-color: #fff5f3; color: #ee4d2d; }
-
-    /* CSS định dạng nút Radio giả thành nút bấm như Shopee */
-    .custom-radio-btn {
-        border-radius: 4px;
-        padding: 6px 14px;
-        background-color: #f5f5f5;
-        border: 1px solid #f5f5f5;
-        color: #333;
-        transition: all 0.2s;
-        cursor: pointer;
-    }
-    
-    .custom-radio-btn:hover {
-        border-color: #ee4d2d;
-        color: #ee4d2d;
-        background-color: #fff;
-    }
-
-    .btn-check:checked + .custom-radio-btn {
-        border: 1px solid #ee4d2d;
-        color: #ee4d2d;
-        background-color: #fff;
-        position: relative;
-    }
-    
-    .btn-check:checked + .custom-radio-btn::after {
-        content: "✓";
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        background-color: #ee4d2d;
+    .detail-card {
+        background: #1a1d20; /* Màu nền tối sang trọng */
         color: white;
-        font-size: 10px;
-        padding: 0 4px;
-        border-radius: 4px 0 0 0;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        padding: 30px;
+        margin-bottom: 50px;
+        border: 1px solid #343a40;
+    }
+    .product-img-wrapper {
+        border-radius: 10px;
+        background: #fff;
+        padding: 30px;
+        text-align: center;
+    }
+    .product-img {
+        width: 100%;
+        max-height: 400px;
+        object-fit: contain;
+    }
+    .price-text {
+        color: #ff7675;
+        font-size: 2.2rem;
+        font-weight: 800;
+    }
+    .btn-buy {
+        background: linear-gradient(45deg, #d63031, #ff7675);
+        border: none;
+        color: white;
+        font-weight: bold;
+    }
+    .btn-buy:hover { transform: scale(1.02); color: white; box-shadow: 0 5px 15px rgba(214, 48, 49, 0.4); }
+    
+    .form-select-custom, .form-control-custom {
+        background-color: #2d3436;
+        color: white;
+        border: 1px solid #636e72;
+    }
+    .form-select-custom:focus, .form-control-custom:focus {
+        background-color: #2d3436;
+        color: white;
+        border-color: #ff7675;
+        box-shadow: none;
     }
 </style>
+
+<div class="container mt-5">
+    <div class="detail-card">
+        <div class="row g-5 align-items-center">
+            <div class="col-md-5">
+                <div class="product-img-wrapper shadow">
+                    <img src="{{ watch.image_url }}" class="product-img" alt="{{ watch.name }}">
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <h1 class="fw-bold mb-3">{{ watch.name }}</h1>
+                
+                <div class="d-flex align-items-center mb-3">
+                    <span class="badge bg-warning text-dark fs-6 me-3"><i class="bi bi-tag-fill"></i> Hãng: {{ watch.brand }}</span>
+                    <span class="text-light"><i class="bi bi-box-seam"></i> Kho: Còn {{ watch.stock }} chiếc</span>
+                </div>
+                
+                <p class="price-text mb-4">{{ watch.price|intcomma }} đ</p>
+                
+                <div class="mb-4 text-light" style="line-height: 1.8; opacity: 0.9;">
+                    <h5 class="fw-bold text-white">Mô tả sản phẩm:</h5>
+                    {{ watch.description|default:"Chưa có mô tả cho sản phẩm này. Đây là mẫu đồng hồ cao cấp với thiết kế tinh xảo, mang lại sự sang trọng và đẳng cấp cho người đeo." }}
+                </div>
+
+                <hr class="border-secondary mb-4">
+
+                <form action="{% url 'add_to_cart' watch.pk %}" method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label text-light fw-bold">Số lượng</label>
+                            <input type="number" name="quantity" value="1" min="1" max="{{ watch.stock }}" class="form-control form-control-custom">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-light fw-bold">Loại dây</label>
+                            <select name="strap_type" class="form-select form-select-custom">
+                                <option value="Kim loại">Kim loại</option>
+                                <option value="Da thật">Da thật</option>
+                                <option value="Cao su">Cao su</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-light fw-bold">Màu mặt</label>
+                            <select name="color" class="form-select form-select-custom">
+                                <option value="Đen">Đen</option>
+                                <option value="Trắng">Trắng</option>
+                                <option value="Xanh Dương">Xanh Dương</option>
+                                <option value="Vàng">Vàng</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <button type="submit" class="btn btn-outline-light w-100 py-3 fw-bold">
+                                <i class="bi bi-cart-plus me-2"></i>THÊM VÀO GIỎ
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <button type="submit" name="buy_now" value="true" class="btn btn-buy w-100 py-3 text-uppercase">
+                                Mua ngay lập tức
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="text-center mb-5">
+        <a href="/" class="btn btn-outline-dark px-4 py-2 fw-bold">
+            <i class="bi bi-arrow-left me-2"></i> Quay lại cửa hàng
+        </a>
+    </div>
+</div>
 {% endblock %}

@@ -8,25 +8,28 @@ from .forms import UserUpdateForm
 
 # 1. Trang chủ (Tìm kiếm, Lọc hãng, Sắp xếp)
 def home(request):
+    # Lấy tất cả sản phẩm ban đầu
     products = Watch.objects.all() 
 
-    # Tìm kiếm theo tên
+    # 1.1 Tìm kiếm theo tên (Không phân biệt hoa thường)
     query = request.GET.get('q')
-    if query:
-        products = products.filter(name__icontains=query)
+    if query and query.strip():
+        products = products.filter(name__icontains=query.strip())
 
-    # Lọc theo hãng
+    # 1.2 Lọc theo hãng (Khớp chính xác giá trị từ thẻ select)
     brand = request.GET.get('brand')
-    if brand:
-        products = products.filter(brand=brand)
+    if brand and brand.strip():
+        # Dùng __iexact để đảm bảo 'rolex' hay 'Rolex' đều khớp
+        products = products.filter(brand__iexact=brand.strip())
 
-    # Sắp xếp giá
+    # 1.3 Sắp xếp giá
     sort_by = request.GET.get('sort')
     if sort_by == 'price_asc':
         products = products.order_by('price')
     elif sort_by == 'price_desc':
         products = products.order_by('-price')
 
+    # Trả về biến 'watches' để khớp với vòng lặp {% for watch in watches %} trong template
     return render(request, 'home.html', {'watches': products})
 
 # 2. Trang chi tiết sản phẩm
@@ -40,7 +43,7 @@ def add_to_cart(request, pk):
         cart = request.session.get('cart', {})
         try:
             quantity = int(request.POST.get('quantity', 1))
-        except ValueError:
+        except (ValueError, TypeError):
             quantity = 1
             
         strap_type = request.POST.get('strap_type', 'Mặc định')
@@ -126,7 +129,7 @@ def register(request):
         form = UserCreationForm()
     return render(request, 'register.html', {'form': form})
 
-# 8. Trang Thanh toán (Xử lý lưu đơn hàng & VietQR)
+# 8. Trang Thanh toán
 @login_required(login_url='login')
 def checkout(request):
     cart = request.session.get('cart', {})
@@ -150,7 +153,6 @@ def checkout(request):
             except Watch.DoesNotExist:
                 continue
 
-        # Xử lý Mã giảm giá (Chỉ dành cho khách cũ)
         discount_percent = 0
         if coupon_code:
             try:
@@ -162,14 +164,12 @@ def checkout(request):
 
         final_price = total_price * (100 - discount_percent) / 100
 
-        # Xác định trạng thái đơn hàng
         status = 'Đang xử lý'
         if payment_method == 'Chuyển khoản':
             status = 'Chờ xác nhận CK'
         elif payment_method == 'Thẻ':
             status = 'Đã thanh toán (Thẻ)'
 
-        # Tạo Đơn hàng
         order = Order.objects.create(
             user=request.user, fullname=fullname, phone=phone, address=address,
             payment_method=payment_method, total_price=final_price, status=status
@@ -186,7 +186,6 @@ def checkout(request):
         request.session.modified = True
         return redirect('order_success')
 
-    # Hiển thị trang thanh toán (GET)
     cart_items = []
     total_price = 0
     for cart_key, item_data in cart.items():
@@ -203,7 +202,7 @@ def checkout(request):
             
     return render(request, 'checkout.html', {'cart_items': cart_items, 'total_price': total_price})
 
-# 9. Kiểm tra mã giảm giá (Dùng cho AJAX)
+# 9. Kiểm tra mã giảm giá
 @login_required(login_url='login')
 def check_coupon(request):
     code = request.GET.get('code', '')
